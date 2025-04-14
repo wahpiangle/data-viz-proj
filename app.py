@@ -30,6 +30,6 @@ correlation_matrix = px.imshow(filtered_df[["T-R Separation Distance (m)", "Rece
 st.plotly_chart(correlation_matrix, use_container_width=True)
 
 st.subheader("Seasonal Impact on Path Loss")
-season_fig = px.box(df, x="Normalized Season", y="Path Loss (dB)", color="Normalized Season",
+season_fig = px.box(filtered_df, x="Normalized Season", y="Path Loss (dB)", color="Normalized Season",
                     title="Path Loss Distribution Across Seasons")
 st.plotly_chart(season_fig)
