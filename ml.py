@@ -1,5 +1,5 @@
 import pandas as pd
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import KFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression, Ridge
 from sklearn.ensemble import RandomForestRegressor
@@ -9,9 +9,10 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.metrics import mean_absolute_error, r2_score
 import xgboost as xgb
 import streamlit as st
+import numpy as np
 
 @st.cache_resource
-def train_and_evaluate_models(df):
+def train_and_evaluate_models(df, n_splits=5):
     df = pd.get_dummies(df, columns=["Normalized Season"])
 
     features = ["T-R Separation Distance (m)", "Received Power (dBm)", "Azimuth AoD (degree)",
@@ -20,11 +21,11 @@ def train_and_evaluate_models(df):
                 "Normalized Season_fall", "Normalized Season_spring",
                 "Normalized Season_summer", "Normalized Season_winter"]
 
-    X = df[features]
-    y = df["Path Loss (dB)"]
+    X = df[features].values
+    y = df["Path Loss (dB)"].values
 
-    # Train-test split
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    kf = KFold(n_splits=n_splits, shuffle=True, random_state=42)
+
     models = {
         "Linear Regression": LinearRegression(),
         "Ridge Regression": Ridge(alpha=1.0),
@@ -35,26 +36,35 @@ def train_and_evaluate_models(df):
         "Neural Network (MLP)": MLPRegressor(hidden_layer_sizes=(64, 64), max_iter=500, random_state=42)
     }
 
-    scaler = StandardScaler()
-    X_train_scaled = scaler.fit_transform(X_train)
-    X_test_scaled = scaler.transform(X_test)
+    results = {name: {"MAE": [], "R2": []} for name in models.keys()}
 
-    results = []
+    for train_index, test_index in kf.split(X):
+        X_train, X_test = X[train_index], X[test_index]
+        y_train, y_test = y[train_index], y[test_index]
 
-    for name, model in models.items():
-        if "SVR" in name or "KNN" in name or "MLP" in name:
-            model.fit(X_train_scaled, y_train)
-            y_pred = model.predict(X_test_scaled)
-        else:
-            model.fit(X_train, y_train)
-            y_pred = model.predict(X_test)
+        scaler = StandardScaler()
+        X_train_scaled = scaler.fit_transform(X_train)
+        X_test_scaled = scaler.transform(X_test)
 
-        mae = mean_absolute_error(y_test, y_pred)
-        r2 = r2_score(y_test, y_pred)
-        results.append({
+        for name, model in models.items():
+            if "SVR" in name or "KNN" in name or "MLP" in name:
+                model.fit(X_train_scaled, y_train)
+                y_pred = model.predict(X_test_scaled)
+            else:
+                model.fit(X_train, y_train)
+                y_pred = model.predict(X_test)
+
+            results[name]["MAE"].append(mean_absolute_error(y_test, y_pred))
+            results[name]["R2"].append(r2_score(y_test, y_pred))
+
+    summary = []
+    for name, scores in results.items():
+        summary.append({
             "Model": name,
-            "MAE": mae,
-            "R2 Score": r2
+            "MAE (Mean)": np.mean(scores["MAE"]),
+            "MAE (Std)": np.std(scores["MAE"]),
+            "R2 Score (Mean)": np.mean(scores["R2"]),
+            "R2 Score (Std)": np.std(scores["R2"])
         })
 
-    return pd.DataFrame(results)
+    return pd.DataFrame(summary)

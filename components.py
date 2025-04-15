@@ -44,22 +44,35 @@ def displayCorrelationHeatmap(filtered_df):
 
 def displayMachineLearningCharts(df):
     st.header("Machine Learning Model Evaluation")
-    results_df = train_and_evaluate_models(df)
 
-    # Sort the DataFrame by MAE and R² Score in descending order
-    sorted_mae_df = results_df.sort_values(by="MAE", ascending=True)
-    sorted_r2_df = results_df.sort_values(by="R2 Score", ascending=False)
+    results_df = train_and_evaluate_models(df, n_splits=5)
+    best_model = results_df.loc[results_df["R2 Score (Mean)"].idxmax()]
 
-    # Plot MAE (sorted)
+    st.success(f"🏆 **Best Model:** {best_model['Model']}")
+    st.write(f"🔹 R² Score: {best_model['R2 Score (Mean)']:.4f}")
+    st.write(f"🔹 MAE: {best_model['MAE (Mean)']:.4f}")
+
+    sorted_mae_df = results_df.sort_values(by="MAE (Mean)", ascending=True)
+    sorted_r2_df = results_df.sort_values(by="R2 Score (Mean)", ascending=False)
+
     st.plotly_chart(
-        px.bar(sorted_mae_df, x="Model", y="MAE", title="Mean Absolute Error (MAE) by Model",
-            color="MAE", color_continuous_scale="blues")
-        .update_traces(hovertemplate='Model: %{x}<br>MAE: %{y:.2f}')
+        px.bar(
+            sorted_mae_df,
+            x="Model",
+            y="MAE (Mean)",
+            title="Mean Absolute Error (MAE) by Model (K-Fold Avg)",
+            color="MAE (Mean)",
+            color_continuous_scale="blues"
+        ).update_traces(hovertemplate='Model: %{x}<br>MAE: %{y:.2f}')
     )
 
-    # Plot R² Score (sorted)
     st.plotly_chart(
-        px.bar(sorted_r2_df, x="Model", y="R2 Score", title="R² Score by Model",
-            color="R2 Score", color_continuous_scale="viridis")
-        .update_traces(hovertemplate='Model: %{x}<br>R² Score: %{y:.2f}')
+        px.bar(
+            sorted_r2_df,
+            x="Model",
+            y="R2 Score (Mean)",
+            title="R² Score by Model (K-Fold Avg)",
+            color="R2 Score (Mean)",
+            color_continuous_scale="viridis"
+        ).update_traces(hovertemplate='Model: %{x}<br>R² Score: %{y:.2f}')
     )
