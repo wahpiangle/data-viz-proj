@@ -17,7 +17,7 @@ def train_and_evaluate_models(df, n_splits=5):
 
     features = ["T-R Separation Distance (m)", "Received Power (dBm)", "Azimuth AoD (degree)",
                 "Elevation AoD (degree)", "Azimuth AoA (degree)", "Elevation AoA (degree)",
-                "RMS Delay Spread (ns)", "Frequency",
+                "RMS Delay Spread (ns)", "Frequency (GHz)",
                 "Normalized Season_fall", "Normalized Season_spring",
                 "Normalized Season_summer", "Normalized Season_winter"]
 

@@ -12,7 +12,7 @@ def displayScatterPlot(filtered_df):
     x_var = st.selectbox("Select a factor to compare with Path Loss:",
                         ["T-R Separation Distance (m)", "Received Power (dBm)", "Azimuth AoD (degree)",
                          "Elevation AoD (degree)", "Azimuth AoA (degree)", "Elevation AoA (degree)",
-                         "RMS Delay Spread (ns)"])
+                         "RMS Delay Spread (ns)", "Frequency (GHz)"])
 
     scatter_fig = px.scatter(filtered_df, x=x_var, y="Path Loss (dB)",
                            trendline=trendline_type,
